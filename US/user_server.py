@@ -3,35 +3,38 @@ import requests
 
 app = Flask(__name__)
 
-@app.route('/compute-fibonacci', methods=['GET'])
-def retrieve_fibonacci():
-    service_name = request.args.get('service_name')
-    service_port = request.args.get('service_port')
-    sequence_index = request.args.get('sequence_index')
-    dns_ip = request.args.get('dns_ip')
-    dns_port = request.args.get('dns_port')
+@app.route('/fibonacci', methods=['GET'])
+def get_fibonacci():
+    # Get query parameters from the request
+    hostname = request.args.get('hostname')
+    fs_port = request.args.get('fs_port')
+    number = request.args.get('number')
+    as_ip = request.args.get('as_ip')
+    as_port = request.args.get('as_port')
 
-    if not (service_name and service_port and sequence_index and dns_ip and dns_port):
-        return "Bad Request: Missing required parameters", 400
+    if not (hostname and fs_port and number and as_ip and as_port):
+        return "Bad Request: Missing parameters", 400
 
+    # Query Authoritative Server to get the IP address of the Fibonacci Server
     try:
-        dns_request_payload = f'TYPE=A\nNAME={service_name}\n'
-        dns_response = requests.get(f'http://{dns_ip}:{dns_port}/resolve', params={'query': dns_request_payload})
-        if dns_response.status_code == 200:
-            service_ip = dns_response.json().get('VALUE')
+        dns_query = f'TYPE=A\nNAME={hostname}\n'
+        response = requests.get(f'http://{as_ip}:{as_port}/dns-query', params={'query': dns_query})
+        if response.status_code == 200:
+            fs_ip = response.json().get('VALUE')
         else:
-            return "Error: Unable to resolve service IP via DNS", 500
-    except Exception as err:
-        return f"Error: {str(err)}", 500
+            return f"Error: Couldn't query the Authoritative Server", 500
+    except Exception as e:
+        return f"Error: {str(e)}", 500
 
+    # Query Fibonacci Server for the Fibonacci number
     try:
-        fibonacci_response = requests.get(f'http://{service_ip}:{service_port}/compute', params={'index': sequence_index})
-        if fibonacci_response.status_code == 200:
-            return jsonify(fibonacci_response.json())
+        fib_response = requests.get(f'http://{fs_ip}:{fs_port}/fibonacci', params={'number': number})
+        if fib_response.status_code == 200:
+            return jsonify(fib_response.json())
         else:
-            return "Error: Failed to retrieve Fibonacci number", 500
-    except Exception as err:
-        return f"Error: {str(err)}", 500
+            return "Error: Couldn't get Fibonacci number", 500
+    except Exception as e:
+        return f"Error: {str(e)}", 500
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)

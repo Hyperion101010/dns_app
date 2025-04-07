@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: authoritative-server
-        image: Hyperion101010/dns_app/as:latest 
+        image: hyperion101010/dns_app_as:latest 
         ports:
         - containerPort: 53533
 ---
@@ -48,7 +48,7 @@ spec:
     spec:
       containers:
       - name: fibonacci-server
-        image: Hyperion101010/dns_app/fs:latest 
+        image: hyperion101010/dns_app_fs:latest 
         ports:
         - containerPort: 9090
 ---
@@ -81,7 +81,8 @@ spec:
     spec:
       containers:
       - name: user-server
-        image: Hyperion101010/dns_app/us:latest 
+        image: hyperion101010/dns_app_us:latest
+        ports:
         - containerPort: 8080
 ---
 apiVersion: v1
